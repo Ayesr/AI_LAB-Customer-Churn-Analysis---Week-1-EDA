@@ -10,7 +10,7 @@
 
 3: Monthly Charges impact churn: Higher monthly charges are associated with higher churn probability.
 
- 4:Senior Citizens churn more frequently: Senior customers show a higher likelihood of churn compared to non-senior customers.
+4: Senior Citizens churn more frequently: Senior customers show a higher likelihood of churn compared to non-senior  customers.
 
 5: Data Quality Note: TotalCharges contained 11 missing values, which require cleaning before modeling.
 ### Next Steps- Week 2: Build machine learning models- Week 3: Model optimization- Week 4: Deploy interactive dashboard
