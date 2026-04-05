@@ -86,3 +86,25 @@ Install the required dependencies:
 ```bash
 pip install pandas numpy matplotlib seaborn jupyter
 pip install scikit-learn
+
+### Best Model:
+- **Optimized XGBoost** with **0.7984%** accuracy
+- Saved as: best_churn_model.pkl
+### Top 5 Most Important Features:
+                 
+1. Contract_Two year    
+2. InternetService_Fiber optic   
+3. Contract_One year   
+4. PaymentMethod_Electronic check   
+5. InternetService_No    
+                       
+
+### Key Learnings:
+- Cross-validation provides more reliable estimates than single train/test split
+- Hyperparameter tuning can improve accuracy by 2-4%
+- XGBoost typically outperforms other algorithms on tabular data
+- Feature engineering matters more than model selection
+### Next Steps (Week 4):
+- Deploy model as interactive web application
+- Create user interface for predictions
+- Add explanation capabilities
