@@ -37,7 +37,6 @@ st.markdown("""
 # --- Helper Function: Load Model ---
 @st.cache_resource
 def load_model():
-    # Attempt to load model; uses a dummy fallback if file not found for demo purposes
     try:
         with open('best_churn_model.pkl', 'rb') as file:
             return pickle.load(file)
@@ -96,10 +95,7 @@ with tab3:
     backup = s_col2.selectbox('Online Backup', ['No', 'Yes', 'No internet service'])
     support = s_col3.selectbox('Tech Support', ['No', 'Yes', 'No internet service'])
     tv = s_col3.selectbox('Streaming TV', ['No', 'Yes', 'No internet service'])
-    # These extra features fill out the model requirement
-    movies = 'No'
-    protection = 'No'
-    lines = 'No'
+    movies = 'No'; protection = 'No'; lines = 'No'
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -108,7 +104,6 @@ if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
     if model is None:
         st.error("Model file 'best_churn_model.pkl' not found. Please upload the model to the directory.")
     else:
-        # Prepare Input
         input_dict = {
             'SeniorCitizen': 1 if senior == 'Yes' else 0,
             'tenure': tenure, 'MonthlyCharges': monthly_charges, 'TotalCharges': total_charges,
@@ -123,7 +118,6 @@ if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
         input_encoded = pd.get_dummies(input_df)
         input_final = input_encoded.reindex(columns=EXPECTED_COLUMNS, fill_value=0)
 
-        # Get Prediction
         prob = model.predict_proba(input_final)[0][1] * 100
         prediction = model.predict(input_final)[0]
 
@@ -133,7 +127,6 @@ if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
         res_col1, res_col2 = st.columns([1, 1])
 
         with res_col1:
-            # Gauge Logic based on your image request
             if prob < 40:
                 risk_level = "LOW RISK"
                 risk_color = "green"
@@ -148,10 +141,11 @@ if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
                 mode="gauge+number",
                 value=prob,
                 number={'font': {'size': 80, 'color': '#7f8c8d'}, 'valueformat': '.1f'},
-                domain={'x': [0, 1], 'y': [0, 1]},
+                # Adjusted Y-domain to start higher (0.18) so number doesn't touch text
+                domain={'x': [0, 1], 'y': [0.18, 1]}, 
                 gauge={
                     'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "gray"},
-                    'bar': {'color': "black", 'thickness': 0.25}, # Black indicator bar like the image
+                    'bar': {'color': "black", 'thickness': 0.25},
                     'bgcolor': "white",
                     'borderwidth': 1,
                     'bordercolor': "gray",
@@ -164,11 +158,15 @@ if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
             ))
             
             fig_gauge.update_layout(
-                height=350,
+                height=400, # Increased height to prevent clipping
                 margin=dict(l=50, r=50, t=20, b=20),
                 annotations=[dict(
                     text=f"<b>{risk_level}</b>",
-                    x=0.5, y=0.15, font_size=28, font_color=risk_color, showarrow=False
+                    x=0.5, 
+                    y=0.1, # Moved text further down to create space
+                    font_size=28, 
+                    font_color=risk_color, 
+                    showarrow=False
                 )]
             )
             st.plotly_chart(fig_gauge, use_container_width=True)
@@ -176,7 +174,6 @@ if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
 
         with res_col2:
             st.markdown("### Risk Factor Impact")
-            # Simulated Impact Values
             impact_data = {
                 'Feature': ['Tenure', 'Contract Type', 'Paperless Billing', 'Services & Support'],
                 'Impact': [48, 22, 65, 80]
