@@ -11,29 +11,42 @@ st.set_page_config(page_title='Churn Predictor Pro', page_icon='📊', layout='w
 st.markdown("""
     <style>
     .main {
-        background-color: #f5f7f9;
+        background-color: #f8f9fa;
     }
     .stButton>button {
-        border-radius: 20px;
-        height: 3em;
-        font-weight: bold;
-    }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 15px;
         border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        height: 3.5em;
+        font-weight: bold;
+        background-color: #007bff;
+        color: white;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #f0f2f6;
+        border-radius: 10px 10px 0px 0px;
+        padding: 10px 20px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #007bff !important;
+        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
+# --- Helper Function: Load Model ---
 @st.cache_resource
 def load_model():
+    # Ensure 'best_churn_model.pkl' exists in your directory
     with open('best_churn_model.pkl', 'rb') as file:
         return pickle.load(file)
 
 model = load_model()
 
+# Expected features from the training phase
 EXPECTED_COLUMNS = [
     'SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges', 'gender_Male', 
     'Partner_Yes', 'Dependents_Yes', 'PhoneService_Yes', 'MultipleLines_No phone service', 
@@ -49,13 +62,13 @@ EXPECTED_COLUMNS = [
     'PaymentMethod_Mailed check'
 ]
 
-# --- Header ---
+# --- Header Section ---
 st.title('📉 Customer Churn Prediction Dashboard')
-st.markdown("Enter customer details across the categories below to analyze retention risk.")
+st.markdown("### Strategic Analytics for Customer Retention")
 st.divider()
 
-# --- Horizontal Input Layout ---
-# We use Tabs to group features and Columns within tabs to spread them out
+# --- Input Section (Horizontal/Grid Layout) ---
+st.subheader("1. Configure Customer Profile")
 tab1, tab2, tab3 = st.tabs(["👤 Personal Info", "📑 Subscription Details", "🌐 Services & Support"])
 
 with tab1:
@@ -87,7 +100,6 @@ with tab2:
     total_charges = tenure * monthly_charges
 
 with tab3:
-    # Creating a 3x3 grid for services
     s_col1, s_col2, s_col3 = st.columns(3)
     with s_col1:
         internet = st.selectbox('Internet Service', ['DSL', 'Fiber optic', 'No'])
@@ -102,10 +114,11 @@ with tab3:
         tv = st.selectbox('Streaming TV', ['No', 'Yes', 'No internet service'])
         movies = st.selectbox('Streaming Movies', ['No', 'Yes', 'No internet service'])
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True) # Spacer
 
 # --- Prediction Logic ---
-if st.button('🔍 Run Churn Analysis', type='primary', use_container_width=True):
+if st.button('🔍 RUN CHURN ANALYSIS', use_container_width=True):
+    # Data Preparation
     input_dict = {
         'SeniorCitizen': 1 if senior == 'Yes' else 0,
         'tenure': tenure, 'MonthlyCharges': monthly_charges, 'TotalCharges': total_charges,
@@ -120,49 +133,75 @@ if st.button('🔍 Run Churn Analysis', type='primary', use_container_width=True
     input_encoded = pd.get_dummies(input_df)
     input_final = input_encoded.reindex(columns=EXPECTED_COLUMNS, fill_value=0)
 
-    # Predict
+    # Predict Probabilities
     prob = model.predict_proba(input_final)[0][1] * 100
     prediction = model.predict(input_final)[0]
 
-    # --- Results Display ---
-    st.subheader("Analysis Results")
-    
-    # Summary Metrics
-    res_col1, res_col2 = st.columns(2)
-    with res_col1:
-        if prediction == 1:
-            st.error(f"### High Risk: {prob:.1f}% Churn Probability")
-        else:
-            st.success(f"### Low Risk: {prob:.1f}% Churn Probability")
+    st.divider()
+    st.subheader("2. Risk Assessment Results")
 
-    # Visualizations
+    # --- Results Visualization ---
     col_left, col_right = st.columns([1, 1])
 
     with col_left:
+        # Determine gauge color dynamically
+        if prob < 30:
+            bar_color = "#2ECC71"  # Success Green
+            status_msg = "LOW RISK"
+        elif prob < 70:
+            bar_color = "#F1C40F"  # Warning Yellow
+            status_msg = "MEDIUM RISK"
+        else:
+            bar_color = "#E74C3C"  # Danger Red
+            status_msg = "HIGH RISK"
+
         fig_gauge = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = prob,
-            domain = {'x': [0, 1], 'y': [0, 1]},
-            title = {'text': "Churn Probability Gauge", 'font': {'size': 18}},
-            gauge = {
-                'axis': {'range': [0, 100]},
-                'bar': {'color': "#EF553B" if prob > 50 else "#00CC96"},
+            mode="gauge+number",
+            value=prob,
+            number={'suffix': "%", 'font': {'size': 50}},
+            domain={'x': [0, 1], 'y': [0, 1]},
+            title={'text': f"Assessment: {status_msg}", 'font': {'size': 24, 'color': bar_color}},
+            gauge={
+                'axis': {'range': [0, 100], 'tickwidth': 1},
+                'bar': {'color': bar_color},
+                'bgcolor': "white",
+                'borderwidth': 2,
+                'bordercolor': "#d3d3d3",
                 'steps': [
-                    {'range': [0, 30], 'color': "#e8f5e9"},
-                    {'range': [30, 70], 'color': "#fffde7"},
-                    {'range': [70, 100], 'color': "#ffebee"}]
+                    {'range': [0, 30], 'color': "#D5F5E3"},   # Emerald Green
+                    {'range': [30, 70], 'color': "#FCF3CF"},  # Sunflower Yellow
+                    {'range': [70, 100], 'color': "#FADBD8"}  # Alizarin Red
+                ],
+                'threshold': {
+                    'line': {'color': "black", 'width': 4},
+                    'thickness': 0.75,
+                    'value': prob
+                }
             }
         ))
-        fig_gauge.update_layout(height=300, margin=dict(l=30, r=30, t=50, b=0))
+        fig_gauge.update_layout(height=400, margin=dict(l=30, r=30, t=50, b=20))
         st.plotly_chart(fig_gauge, use_container_width=True)
 
     with col_right:
-        features = ['Tenure', 'Contract', 'Charges', 'Support']
-        impact = [tenure/72, 0.8 if contract == 'Month-to-month' else 0.2, monthly_charges/200, 0.1 if support == 'Yes' else 0.7]
+        st.markdown("### Risk Factor Impact")
+        # Example feature impact (In a production app, use SHAP or model.feature_importances_)
+        features = ['Tenure Duration', 'Contract Type', 'Monthly Charges', 'Tech Support']
+        impact = [
+            (72 - tenure) / 72, 
+            0.9 if contract == 'Month-to-month' else 0.1, 
+            monthly_charges / 200, 
+            0.8 if support == 'No' else 0.2
+        ]
         
         fig_bar = go.Figure(go.Bar(
             x=impact, y=features, orientation='h',
-            marker_color=['#636EFA', '#EF553B', '#00CC96', '#AB63FA']
+            marker_color=['#3498DB', '#9B59B6', '#E67E22', '#1ABC9C']
         ))
-        fig_bar.update_layout(height=300, title="Top Risk Contributors", margin=dict(t=50, b=0))
+        fig_bar.update_layout(height=350, xaxis_title="Relative Contribution to Churn", margin=dict(t=20))
         st.plotly_chart(fig_bar, use_container_width=True)
+
+    # Final Summary Message
+    if prediction == 1:
+        st.error(f"**Critical Alert:** This customer is likely to churn. Recommended action: Offer a long-term contract or loyalty discount.")
+    else:
+        st.success(f"**Retention Outlook:** This customer is stable. Continue standard engagement protocols.")
